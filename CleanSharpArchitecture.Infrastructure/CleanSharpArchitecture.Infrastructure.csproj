@@ -9,7 +9,6 @@
   <ItemGroup>
     <Folder Include="Configurations\" />
     <Folder Include="Data\" />
-    <Folder Include="Repositories\" />
     <Folder Include="Caching\" />
     <Folder Include="Logging\" />
   </ItemGroup>
