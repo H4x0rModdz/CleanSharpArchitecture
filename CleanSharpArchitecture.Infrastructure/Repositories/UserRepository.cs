@@ -1,7 +1,10 @@
 using CleanSharpArchitecture.Application.Repositories.Interfaces;
+using CleanSharpArchitecture.Domain.Dictionaries;
 using CleanSharpArchitecture.Domain.Entities;
+using CleanSharpArchitecture.Domain.Enums;
 using CleanSharpArchitecture.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace CleanSharpArchitecture.Infrastructure.Repositories
 {
@@ -24,6 +27,41 @@ namespace CleanSharpArchitecture.Infrastructure.Repositories
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
             return user;
+        }
+
+        public async Task<IEnumerable<User>> GetAllUsers(EntityStatus? status = null, string? include = null, int pageNumber = 1, int pageSize = 10)
+        {
+            var query = _context.Users.AsQueryable();
+
+            if (status.HasValue)
+                query = query.Where(u => u.Status == status.Value);
+
+            if (include?.Contains("posts") == true)
+                query = query.Include(u => u.Posts)
+                             .ThenInclude(p => p.Images);
+
+            query = ApplyIncludes(query, include);
+
+            query = query.Skip((pageNumber - 1) * pageSize)
+                         .Take(pageSize);
+
+            return await query.ToListAsync();
+        }
+
+        private IQueryable<User> ApplyIncludes(IQueryable<User> query, string? include)
+        {
+            if (string.IsNullOrEmpty(include))
+                return query;
+
+            var includes = include.Split(',');
+
+            foreach (var inc in includes)
+            {
+                if (IncludeMap.UserIncludeDictionary.TryGetValue(inc.Trim().ToLower(), out var expression))
+                    query = query.Include(expression);
+            }
+
+            return query;
         }
 
         /// <summary>
@@ -70,6 +108,16 @@ namespace CleanSharpArchitecture.Infrastructure.Repositories
                 _context.Users.Remove(user);
                 await _context.SaveChangesAsync();
             }
+        }
+
+        /// <summary>
+        /// Seleciona um usuário pelo seu código de recuperação de senha.
+        /// </summary>
+        /// <returns>Uma tarefa que representa a operação assíncrona.</returns>
+        public async Task<User> SelectByRecoveryCode(string code)
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.RecoveryCode == code);
         }
     }
 }
