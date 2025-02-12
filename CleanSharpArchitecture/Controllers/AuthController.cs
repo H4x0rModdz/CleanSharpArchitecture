@@ -1,4 +1,5 @@
 ﻿using CleanSharpArchitecture.Application.DTOs.Auth.Request;
+using CleanSharpArchitecture.Application.DTOs.Auth.Response;
 using CleanSharpArchitecture.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,17 +15,27 @@ namespace CleanSharpArchitecture.Controllers
 
         [HttpPost("register")]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> Register([FromForm] RegisterDto registerUserDto)
+        public async Task<RegisterResultDto> Register([FromForm] RegisterDto registerUserDto)
         {
-            var result = await _authService.RegisterUserAsync(registerUserDto);
-            return Ok(result);
+            return await _authService.Register(registerUserDto);
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+        public async Task<LoginResultDto> Login([FromBody] LoginDto loginDto)
         {
-            var result = await _authService.LoginUserAsync(loginDto);
-            return Ok(result);
+            return await _authService.Login(loginDto);
+        }
+
+        [HttpPost("send-code")]
+        public async Task<SendCodeResultDto> SendRecoveryCode([FromBody] SendRecoveryCodeRequestDto recoveryDto)
+        {
+            return await _authService.SendRecoveryCode(recoveryDto);
+        }
+
+        [HttpPost("recovery-password")]
+        public async Task<RecoveryResultDto> RecoveryPassword([FromBody] SendRecoveryRequestDto recoveryDto)
+        {
+            return await _authService.RecoveryPassword(recoveryDto);
         }
     }
 }
